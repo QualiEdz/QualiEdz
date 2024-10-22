@@ -1,0 +1,45 @@
+# Loop through each log file
+foreach my $log_file (@log_files) {
+    my $server = substr($log_file, -1, 1);  # Extract the server (A to M)
+    my $file_path = "$input_dir/$log_file";
+
+    # Open each log file
+    open(my $log_fh, '<', $file_path) or die "Cannot open $file_path: $!";
+
+    # Read file line by line
+    while (my $line = <$log_fh>) {
+        chomp $line;
+
+        # Check if the line length is sufficient and extract the 16th character
+        if (length($line) >= 16) {
+            my $flag = substr($line, 15, 1);  # 16th position (index starts from 0)
+            
+            # Only proceed if the 16th character is Y or N
+            if ($flag eq 'Y' or $flag eq 'N') {
+                # Extract the job name (assuming it's the first word in the line)
+                if ($line =~ /^(\S+)/) {
+                    my $job_name = $1;
+
+                    # Write to the output file
+                    print $out_fh "$job_name\t";
+                    
+                    # Write server name and Y/N value
+                    foreach my $s ('A' .. 'M') {
+                        if ($s eq $server) {
+                            print $out_fh "$flag\t";  # Write Y/N for the current server
+                        } else {
+                            print $out_fh "\t";  # Empty for other servers
+                        }
+                    }
+                    print $out_fh "\n";  # Move to the next line
+                }
+            }
+        }
+    }
+    close($log_fh);
+}
+
+# Close the output file
+close($out_fh);
+
+print "DataYN.txt has been created successfully in $output_dir\n";
